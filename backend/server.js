@@ -53,7 +53,7 @@ app.post('/api/process', (req, res) => {
   // Set default operations if not provided
   const ops = operations || {};
   
-  const pyProcess = spawn('python', [
+  const pyProcess = spawn('python3', [
     pythonScript,
     inputPath,
     outputPath,
@@ -92,7 +92,7 @@ app.post('/api/generate', (req, res) => {
 
   const config = { mode: 'generate', type, frequency, duration, amplitude };
 
-  const pyProcess = spawn('python', [
+  const pyProcess = spawn('python3', [
     pythonScript,
     'NONE', // Dummy input
     outputPath,
