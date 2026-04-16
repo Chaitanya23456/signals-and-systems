@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+dist/
+build/
+.env
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Backend specifics
+__pycache__/
+*.wav
+uploads/
+proc-*.wav
+gen-*.wav
+
+# IDE
+.vscode/
+.idea/
