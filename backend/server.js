@@ -18,7 +18,14 @@ const getBaseUrl = (req) => {
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Ensure uploads directory exists globally
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Created uploads directory at:', uploadsDir);
+}
+
+app.use('/uploads', express.static(uploadsDir));
 
 // Storage Configuration
 const storage = multer.diskStorage({
