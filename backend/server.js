@@ -9,6 +9,12 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const PORT = process.env.PORT || 5001;
 
+// Helper to get absolute base URL
+const getBaseUrl = (req) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+  return `${protocol}://${req.get('host')}`;
+};
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -17,8 +23,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = 'uploads/';
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+    const dir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     cb(null, dir);
   },
   filename: (req, file, cb) => {
@@ -32,10 +38,11 @@ const upload = multer({ storage });
 // 1. Upload Audio
 app.post('/api/upload', upload.single('audio'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  const baseUrl = getBaseUrl(req);
   res.json({ 
     message: 'File uploaded successfully',
     filename: req.file.filename,
-    url: `/uploads/${req.file.filename}`
+    url: `${baseUrl}/uploads/${req.file.filename}`
   });
 });
 
@@ -63,8 +70,14 @@ app.post('/api/process', (req, res) => {
   let resultData = '';
   let errorData = '';
 
-  pyProcess.stdout.on('data', (data) => resultData += data.toString());
-  pyProcess.stderr.on('data', (data) => errorData += data.toString());
+  pyProcess.stdout.on('data', (data) => {
+    resultData += data.toString();
+    console.log('Python Output Chunk:', data.toString().substring(0, 100));
+  });
+  pyProcess.stderr.on('data', (data) => {
+    errorData += data.toString();
+    console.log('Python Error Chunk:', data.toString());
+  });
 
   pyProcess.on('close', (code) => {
     if (code !== 0) {
@@ -74,7 +87,11 @@ app.post('/api/process', (req, res) => {
 
     try {
       const result = JSON.parse(resultData);
-      result.outputUrl = `/uploads/${outputFilename}`;
+      if (result.error) {
+         return res.status(500).json({ error: 'Processing logic failed', details: result.error });
+      }
+      const baseUrl = getBaseUrl(req);
+      result.outputUrl = `${baseUrl}/uploads/${outputFilename}`;
       res.json(result);
     } catch (e) {
       res.status(500).json({ error: 'Failed to parse result from processor', raw: resultData });
@@ -106,7 +123,8 @@ app.post('/api/generate', (req, res) => {
     if (code !== 0) return res.status(500).json({ error: 'Generation failed' });
     try {
       const result = JSON.parse(resultData);
-      result.url = `/uploads/${outputFilename}`;
+      const baseUrl = getBaseUrl(req);
+      result.url = `${baseUrl}/uploads/${outputFilename}`;
       result.filename = outputFilename;
       res.json(result);
     } catch (e) {

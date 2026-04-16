@@ -36,6 +36,12 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 const ASSETS_BASE = API_BASE.replace('/api', '');
 
+const resolveAssetUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${ASSETS_BASE}${url}`;
+};
+
 const SpectrogramCanvas = ({ data }) => {
   const canvasRef = useRef(null);
 
@@ -493,19 +499,19 @@ const App = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
               <div className={`p-4 rounded-3xl border transition-all ${activeSignal ? 'bg-slate-800/40 border-slate-700 shadow-lg' : 'bg-slate-900 border-slate-800 opacity-30'}`}>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3">Original Signal</p>
-                <audio controls src={activeSignal ? `${ASSETS_BASE}${activeSignal.url}` : null} className="w-full h-10 filter invert grayscale opacity-80" />
+                <audio controls src={resolveAssetUrl(activeSignal?.url)} className="w-full h-10 filter invert grayscale opacity-80" />
               </div>
 
               <div className={`p-4 rounded-3xl border transition-all ${result ? 'bg-sky-500/10 border-sky-500/30' : 'bg-slate-900 border-slate-800 opacity-30'}`}>
                 <div className="flex justify-between items-center mb-3">
                    <p className="text-[10px] font-bold text-sky-400 uppercase tracking-[0.2em]">Processed Output</p>
                    {result && (
-                     <a href={`${ASSETS_BASE}${result.outputUrl}`} download className="p-1 hover:text-white transition-colors">
+                     <a href={resolveAssetUrl(result.outputUrl)} download className="p-1 hover:text-white transition-colors">
                        <Download className="w-4 h-4" />
                      </a>
                    )}
                 </div>
-                <audio controls src={result ? `${ASSETS_BASE}${result.outputUrl}` : null} className="w-full h-10 filter invert grayscale" />
+                <audio controls src={resolveAssetUrl(result?.outputUrl)} className="w-full h-10 filter invert grayscale" />
               </div>
             </div>
 
