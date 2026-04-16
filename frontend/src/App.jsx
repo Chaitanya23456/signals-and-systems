@@ -224,7 +224,7 @@ const App = () => {
       setResult(data);
       setError(null);
     } catch (err) {
-      setError("Processing error.");
+      setError(err.response?.data?.details || err.response?.data?.error || "Processing error.");
     } finally {
       setLoading(false);
     }
